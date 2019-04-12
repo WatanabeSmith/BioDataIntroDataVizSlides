@@ -1,0 +1,286 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+# Introduction: Multivariable plots
+
+Multivariable plots allow us to examine the relationships between two or more variables. Or we an examine aspects of interest with univariable plots but by different levels of another variable. Ultimately, we are able to start to see the relationships between several variables at the same time.
+
+We are still interested in some of the same aspects of the data as with univariable plots:
+
++ Location of observations -- where do they fall; how large or small are values.
++ Dispersion or spread -- how spread out they are or how close together.
++ Distribution -- how often/frequently do some values occur.
+
+
+# Packages
+
+R packages are collections of functions and data sets developed by the open source community to build and expand R's functionalities. (http://www.sthda.com/english/wiki/installing-and-using-r-packages)
+
+The packages that we intend to use today have been pre-installed for you, but we do need to load them in order to use them in our work.
+
+```{r load-packages}
+library(tidyverse)  # Contains packages: ggplot, dplyr, readr, and the %>% operator
+library(readxl)     # For importing excel files into R.
+```
+
+# Import the data
+
+For the following exercises we will be using a data set collected to determine factors associated with myopia (near-sightedness) in children.
+
+Myopia (near-sightedness or short-sightedness) is the most common eye problem and is estimated to affect 1.5 billion people (22% of the population). It is a condition of the eye where light focuses in front, instead of on the retina. This causes distant objects to be blurry while close objects appear normal. Other symptoms may include headaches and eye strain. Severe near-sightedness increases the risk of retinal detachment, cataracts, and glaucoma.
+
+The data consist of physiological variables (age, gender, eyeball parameters), environmental variables (time spent on near-work and outdoor activities) as well as hereditary variables (myopic mother and father).
+
+
+```{r read-in-the-data}
+myopia <- readxl::read_excel(
+  path = "/cloud/project/myopia-data.xlsx", 
+  sheet = "myopia")
+
+```
+
+After importing data, it is a good idea to take an initial "glimpse" and check that the data you imported fits with what you expected to see.
+
+```{r glimpse-the-data}
+dplyr::glimpse(myopia)
+```
+
+From this command we get a sense of:
+
++ How many variables/columns are in our data set: 18
++ How many observations/rows there are: 618
++ The names of the variables
++ The variable types: mix of numeric (dbl) and text (chr)
++ And we get to see what some of the values are.
+
+# Categorical variables
+
+We will only examine one type of chart for categorical variables: the bar chart. A bar chart is one of the safest and most easily understood ways to plot categorical data.
+
+## Bar plot of counts
+
+In the univariable exercises, we examined the number of subjects in the data set that had or did not have myopia. We may want to know if more female chilren have mypopia than male children.
+
+
+As before, we want to use `geom_bar` to make a bar plot, but we need to add to the aesthetic mapping. We define a `fill` aesthetic which tells ggplot how to group the data, but also "fills" in the color.
+
+```{r bar-plot-counts}
+
+ggplot(data = myopia, 
+       mapping = aes(x = myopic, 
+                     fill = gender)) + 
+  geom_bar(width = 0.5)
+
+
+
+```
+
+We can see which subjects are female and which are male but it's a little hard to get a sense of how they compare. Sometimes its better to place the bars next to each other. 
+
+To do this, we add an additional argument to `geom_bar` to change the positions of the bars: `position = position_dodge()`.
+
+```{r dodged-bar-plot-counts}
+
+ggplot(data = myopia, 
+       mapping = aes(x = myopic, 
+                     fill = gender)) + 
+  geom_bar(position = position_dodge(), 
+           width = 0.5)
+```
+
+Now we can more easily see there are more males than females without myopia, and there are more females than males with myopia.
+
+## Exercise 1
+
+Let's flip the question around. What if we want to see more readily compare the number of females with and without myopia and the number of males with and without myopia.
+
+Hint: take the example above and switch variables given to the `x` aesthetic and the `fill` aesthtic.
+
+Challenge:
+
++ Show the plot using proportions.
++ Explore myopia by the other categorical variables: `mommy` or `dadmy`.
+
+```{r exercise-1-template, eval=FALSE}
+
+# For bar chart of number or count
+ggplot(data = <data>,
+       mapping = aes(x = <x-variable>, 
+                     fill = <fill-variable>)) +
+  <geom>
+
+```
+
+
+```{r exercise-1}
+
+# Stacked
+ggplot(data = myopia, 
+       mapping = aes(x = gender, 
+                     fill = myopic)) + 
+  geom_bar(width = 0.5)
+
+#Side-by-side
+ggplot(data = myopia, 
+       mapping = aes(x = gender, 
+                     fill = myopic)) + 
+  geom_bar(position = position_dodge(), 
+           width = 0.5)
+
+```
+
+# Continous variables
+
+We can also explore continuous variables and their relationship with an addtional variable in similar ways using ggplot. In this section we will revisit the gplts we saw in the univariable exercises:
+
++ Histograms (`geom_histogram`)
++ Density plots (`geom_density`)
++ Box plots (`geom_boxplot`)
+
+And we will add two other ways to compare continuous variables
+
++ Jittered plot (`geom_jitter`)
++ Scatter plot (`geom_point`)
+
+
+
+## Histograms
+
+Similar to the bar plots, we can add an additional variable to a histogram using a `fill` aesthetic. 
+
+Let's see how Anterior chamber depth (`acd`) might differ between those with and without myopia. I use the same binwidth to start that we used in the univariable exercises.
+
+```{r histogram-acd}
+ggplot(data = myopia, 
+       mapping = aes(x = acd, 
+                     fill = myopic)) + 
+  geom_histogram(binwidth = 0.10)
+
+
+```
+
+It's interesting to see that the bimodal distribution remains for those without myopia, but we only see one peak for those with mypoia. 
+
+## Density plots
+
+Let's try a density plot to compare the distribution of `acd` by `myopic` status. Here I have added an additional argument to the `geom_density` call that let's us see both curves. The `alpha` argument controls how transparent the fill color is.
+
+
+```{r density-acd}
+ggplot(data = myopia, 
+       mapping = aes(x = acd, 
+                     fill = myopic)) + 
+  geom_density(alpha = 0.5)
+```
+
+We can see similar information to what we saw with the histogram but now shown as a smooth curve. Note that a density plot can also mislead if not careful by showing a smooth continuous distribution when the data may actually be more sparse. It helps to understand the underlying data to guage when one plot might provide better conclusions than the other.
+
+
+## Boxplots
+
+Once again, let's compare `acd` by `myopic` status but this time using a box plot.
+
+You might recall in the univariable exercises that we provided a place holder to the `x` aesthetic, here we will give a real variable `myopic` (no quotes)
+
+```{r boxplot-acd}
+ggplot(data = myopia, 
+       mapping = aes(x = myopic, 
+                     y = acd)) + 
+  geom_boxplot(width = 0.5)
+
+```
+
+## Jittered plot
+
+A jittered plot is very similar to a box plot, but it allows you to see the inividual data points rather than the summary that a box plot shows. This can be a powerful and informative plot to use, that lends itself well to smaller data sets.
+
+Syntax is nearly identical to the boxplot but we will use `geom_jitter`
+
+```{r jitterplot-acd}
+ggplot(data = myopia, 
+       mapping = aes(x = myopic, 
+                     y = acd)) + 
+  geom_jitter(width = 0.25)
+
+```
+
+
+## Scatter plot
+
+Up to this point, we have examined bi-variable plots that visualize a contiuous variable by a categorical variable. With a scatter plot, you can compare two continous variables and see what type of relationship might exist between the variables.
+
+Let's plot the relationship between Anterior Chamber Depth (`acd`) and Vitreous Chamber Depth (`vcd`).
+
+```{r scatter-plot}
+ggplot(data = myopia, 
+       mapping = aes(x = acd, 
+                     y = vcd)) + 
+  geom_point()
+```
+
+## Exercise 2
+
+Select two variables from the data set and create one of the bivariable plots above. Use the command `dplyr::glimpse(myopia)` to see the variable that are available in our data set.
+
+Be sure to select the appropiate plot type whether you are comparing 
+
++ two categorical variables (bar plot), 
++ two continous variables (scatter plot), or 
++ One continuous and one categorical (histogram, density, boxplot, jitter)
+
+I suggest to avoid the variables that end in "hr". The hours per week variables are intteger values and are a little funky to try to plot with these methods. In practice, they may be treated as categorical variables or grouped into meaningful categories.
+
+Some ideas:
+
++ Boxplot (or jitter plot) of `acd` by `age` (note: use `factor(age)` not `age`)
++ Select a plot to compare `acd` (continuous variable) with `mommy` or `dadmy` (categorical)
++ Jitter plot of `age` on the y-axis and `gender` on the x-axis (use `geom_jitter(width = 0.15, height = 0.15)`)
+
+Challenge: try working with the `hr` variables.
+
+```{r exercise-2-template, eval=FALSE}
+
+# histogram / density
+ggplot(data = <data>,
+       mapping = aes(x = <x-variable>, 
+                     fill = <fill-variable>)) +
+  <geom>
+  
+# boxplot / jitter / scatter
+ggplot(data = <data>,
+       mapping = aes(x = <x-variable>, 
+                     y = <y-variable>)) +
+  <geom>
+
+
+```
+
+```{r exercise-2-answer}
+
+ggplot(data = myopia, 
+       mapping = aes(x = factor(age), 
+                     y = acd)) + 
+  geom_boxplot(width = 0.5)
+
+
+ggplot(data = myopia, 
+       mapping = aes(x = acd, 
+                     fill = mommy)) + 
+  geom_density(alpha = 0.5)
+
+
+ggplot(data = myopia, 
+       mapping = aes(x = gender, 
+                     y = age)) + 
+  geom_jitter(width = 0.15, 
+              height = 0.15)
+
+
+
+```
+
+

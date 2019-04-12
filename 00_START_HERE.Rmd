@@ -1,0 +1,21 @@
+---
+title: "00_START_HERE"
+output: html_notebook
+---
+
+Welcome to the BioData Club Introduction to Data Visualization workshop! This is a R Notebook file, which allows you to alternate between typing text (like here) and blocks of R code that you can run (see below)
+
+```{r}
+# This is a comment, lines that start with "#" inside the code block are not run as code
+library(tidyverse)
+
+head(ChickWeight)
+
+ggplot(ChickWeight,
+       aes(x = Time,
+           y = weight,
+           by = Chick)) +
+  geom_line() +
+  facet_wrap(~ Diet)
+```
+

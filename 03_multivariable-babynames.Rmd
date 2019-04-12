@@ -1,0 +1,263 @@
+---
+title: "Multivariable Exercises - Baby names"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+# Intro to Lineplots
+
+Continuous data like those collected over multiple dates or years are often represented in a lineplot. Since the myopia dataset doesn't have continuous data, we'll use the dataset of American babynames from the Social Security Administration.
+
+## Load data
+
+```{r}
+library("tidyverse")  # Contains packages: ggplot, dplyr, readr, and the %>% operator
+
+library(babynames)
+
+head(babynames)
+summary(babynames)
+```
+
+## Filtering to a single name
+
+This dataset has 1.9 million entries for every year since 1880, so plotting it all at once will not be feasible. Instead we'll need to do some simple filtering. Here we restrict the data to just males named "Kevin, but you should change them to something else!
+
+The result of this filtered data is stored (<-) as "mynamedata
+
+```{r}
+mynamedata <- babynames %>% 
+  filter(                            # Filter only keeps rows matching a criteria
+    (name == "Kevin" & sex == "M"))  # We'll keep rows where the name is "Kevin" AND (&) sex is "M"
+
+ggplot(mynamedata,
+       aes(x = year,
+           y = n)) +
+  geom_line()
+```
+
+## **TASK ONE** Layering one geom over another
+
+Try to layer on an additional geom to this chart from above, just add another "+" and put the second geom on a new line. (Possible options: geom_point, geom_jitter, geom_boxplot, geom_violin, geom_smooth, geom_rug)
+
+
+```{r}
+ggplot(mynamedata,
+       aes(x = year,
+           y = n)) +
+  geom_line()
+```
+
+# Plotting multiple groups
+
+Up to this point we've only been looking at a single group, but when we want to compare data from multiple groups we plot them next to each other. Let's say we want to compare the names "Jack" for males and "Jill" for females.
+
+First we would select just that portion of the data:
+```{r}
+jackjilldata <- babynames %>% 
+  filter(                            # Filter only keeps rows matching a criteria
+    (name == "Jack" & sex == "M") |  # We'll keep males named Jack, "|" means OR...
+      (name == "Jill" & sex == "F"))   # Girls named "Jill"
+```
+
+Then plot it together
+```{r}
+ggplot(jackjilldata,
+       aes(x = year,
+           y = n)) +
+  geom_line()
+```
+
+That didn't work too well, and if you figure out why you'll understand a lot about how ggplot works. The only aesthetics we gave were "year" and "n". If we look at our data in the final rows we see:
+
+```{r}
+tail(jackjilldata) # Tail() shows you the last six rows of your dataset
+```
+
+## Plotting "by" a variable
+
+There is more than one entry for each year, and we never told ggplot to pay attention to "name" or "sex" in the aesthetics. We can change that with the "by" aesthetic, which says to plot separately "by" the given variable.
+
+```{r}
+ggplot(jackjilldata,
+       aes(x = year,
+           y = n,
+           by = name)) +  # Plot each name separately
+  geom_line()
+```
+
+## Plotting with a color aesthetic
+
+That makes more sense. "color" would also do the same trick, and would force the addition of a legend automatically
+
+```{r}
+ggplot(jackjilldata,
+       aes(x = year,
+           y = n,
+           color = name)) +  # Plot each name in a different color
+  geom_line()
+```
+
+## **TASK TWO** Fix a plot with two groups
+
+We're going to make a similar dataset that compares numbers of males and females with the same name:
+
+```{r}
+nongendered_name <- babynames %>% 
+  filter(
+    (name == "Leslie" & sex == "M") |  # Keep all records for males named Leslie OR "|"
+    (name == "Leslie" & sex == "F"))   # Females named Leslie
+
+tail(nongendered_name)
+```
+
+Fix the chart below so that you can compare the popularity of Leslie for males and females over the years
+
+```{r}
+ggplot(nongendered_name,
+       aes(x = year,
+           y = n)) +
+  geom_line()
+```
+
+# Facets: When you have too many groups
+
+This is some advanced stuff here, but where ggplot really starts to shine. Sometimes we are plotting so many different groups that the visualization is no longer informative. Like what if you can't pick which spelling of a common name for your child.
+
+```{r}
+
+# Creating a list of similar names
+mymanynames <- c("Christina", "Cristina", "Kristina",
+                 "Christin",  "Cristin",  "Kristin",
+                 "Christen",  "Cristen",  "Kristen",
+                 "Christine", "Cristine", "Kristine",
+                 "Christy",   "Cristy",   "Kristy")
+
+manynamesdata <- babynames %>% 
+  filter(name %in% mymanynames & # Keep any row with a name in our list AND...
+           sex == "F") %>%       # given to female babies
+  mutate(name = factor(name, levels = mymanynames))
+  # ^This last line^ is both pretty advanced and non-essential, you can ignore it
+  # but it makes the names in our chart follow the same order we typed above
+
+
+ggplot(manynamesdata,
+  aes(x = year,
+      y = n,
+      color = name)) +
+  geom_line()
+```
+
+Ugh, even a smarter color choice isn't going to make this legible. What you need is for each name to be on a separate, smaller chart and that's what faceting does. You just need to specify what variable the charts should separate by.
+
+```{r}
+ggplot(manynamesdata,
+       aes(x = year,
+           y = n,
+           color = name)) +
+  geom_line() +
+  facet_wrap(~ name) # The tilda "~" is "equation notation" and
+                     # is used to separate multiple variables
+```
+
+facet_wrap takes a long series of plots and wraps them into a number of rows and columns. You can specify the number of rows or columns to have more control over the final result.
+
+## **TASK THREE** Using the help page, change the number of rows/columns in a facet
+
+You can look at the documentation for any function by typing "?" followed by the function. Let's look at the documentation for facet_wrap
+
+```{r}
+?facet_wrap
+```
+
+There is a lot here, and learning how to make use of documentation takes a lot of experience. But for starters, under *Usage* you can see the function facet_wrap, followed by a list of *arguments* the function uses. The first argument is "facets", which we've already filled out with "~ name". You can either call out each argument 
+`facet_wrap(facets = ~ name, nrow = 1)`
+or just put values for each argument in order, separated by commas
+`facet_wrap(~ name, 1)`
+
+Using either the documentation, or a good ol' Google search, change your plot above to be 3 columns. If you finish that, use Google to find a way to remove the pesky legend on the right of the chart, or maybe set your scales to "free" so that every plot has a different y-axis range. Use this code chunk to test stuff:
+
+```{r}
+ggplot(manynamesdata,
+       aes(x = year,
+           y = n,
+           color = name)) +
+  geom_line() +
+  facet_wrap(~ name)
+```
+
+## **FINAL TASK** Save your plot
+
+Pick your favorite plot from above. After you run the code to make it once more, it will be temporarily stored as "the last plot I made". You can save the most recent plot using ggsave(), which will give you a quality image to download and use later.
+
+You can change the file type where you write the file name:
+
+* MySuperCoolPlot.jpg will make a JPG picture
+* ADifferentPlotName.png will make a PNG image
+* NamingThingsIsHard.pdf will make a PDF (Here be dragons, nothing a google search can't fix)
+
+You can also change the dimensions of your saved plot (this is sometimes necessary to get the graph you want). Try `ggsave("MyWideAndLessTallPlot.jpg", width = 8, height = 6)`. The default unit for height and width are in inches.
+
+```{r}
+ggsave("MySuperCoolPlot.jpg")
+```
+
+You can download your saved plot using the Files tab in the lower-right window pane:
+
+* Check the box next to your plot
+* Click the *More* drop-down menu
+* Click *Export* and choose where to save your plot
+
+============YOU'RE DONE===============
+
+# Stretch Goals (if you finish early or get bored)
+
+You can facet on as many variables as you want, like comparing multiple names across multiple genders
+
+```{r}
+manynamesdata_nogender <- babynames %>% 
+  filter(name == "Leslie" | name == "Kris" | name == "Casey")
+
+ggplot(manynamesdata_nogender,
+       aes(x = year,
+           y = n,
+           color = name)) +
+  geom_line() +
+  facet_wrap(name ~ sex)
+```
+
+This can be organized a little nicer using facet_grid, which treats each variable as a row or column. Change facet_wrap to facet_grid, how does the plot change?
+
+```{r}
+ggplot(manynamesdata_nogender,
+       aes(x = year,
+           y = n,
+           color = name)) +
+  geom_line() +
+  facet_grid(name ~ sex) # the order is row ~ column, try changing it!
+```
+
+Here are some things you can research online or play around and try:
+
+
+* Make a chart of your name popularity over time, add a vertical line for your birth year (`geom_vline()`)
+* Label the year you were born with the number of babies given your name using `geom_text()` (this will require using two data sets, I'll start you with an example filtered dataset)
+
+```{r}
+justmybirthyear <- babynames %>% 
+  filter(year == 1987 & name == "Kevin" & sex == "M")
+```
+
+* Pick a geom you used before, look up the documentation page and use an arugment you haven't used before
+* Change the background color of your plot (use google to figure this one out)
+* Rotate the labels on your x-axis 90-degrees
+
+
+
+
+
+
+
+
+

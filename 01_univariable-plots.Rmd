@@ -1,0 +1,301 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+# Introduction: Univariable plots
+
+Univariable plots describe the observations of an individual variable, and allow us to examine some properties of interest:
+
++ Location of observations -- where do they fall; how large or small are values.
++ Dispersion or spread -- how spread out they are or how close together.
++ Distribution -- how often/frequently do some values occur.
+
+
+# Packages
+
+R packages are collections of functions and data sets developed by the open source community to build and expand R's functionalities. (http://www.sthda.com/english/wiki/installing-and-using-r-packages)
+
+The packages that we intend to use today have been pre-installed for you, but we do need to load them in order to use them in our work.
+
+```{r load-packages}
+library(tidyverse)  # Contains packages: ggplot, dplyr, readr, and the %>% operator
+library(readxl)     # For importing excel files into R.
+```
+
+# Import the data
+
+For the following exercises we will be using a data set collected to determine factors associated with myopia (near-sightedness) in children.
+
+Myopia (near-sightedness or short-sightedness) is the most common eye problem and is estimated to affect 1.5 billion people (22% of the population). It is a condition of the eye where light focuses in front, instead of on the retina. This causes distant objects to be blurry while close objects appear normal. Other symptoms may include headaches and eye strain. Severe near-sightedness increases the risk of retinal detachment, cataracts, and glaucoma.
+
+The data consist of physiological variables (age, gender, eyeball parameters), environmental variables (time spent on near-work and outdoor activities) as well as hereditary variables (myopic mother and father).
+
+
+```{r read-in-the-data}
+myopia <- readxl::read_excel(
+  path = "myopia-data.xlsx", 
+  sheet = "myopia")
+
+```
+
+After importing data, it is a good idea to take an initial "glimpse" and check that the data you imported fits with what you expected to see.
+
+```{r glimpse-the-data}
+dplyr::glimpse(myopia)
+```
+
+From this command we get a sense of:
+
++ How many variables/columns are in our data set: 18
++ How many observations/rows there are: 618
++ The names of the variables
++ The variable types: mix of numeric (dbl) and text (chr)
++ And we get to see what some of the values are.
+
+# Categorical variables
+
+We will only examine one type of chart for categorical variables: the bar chart. A bar chart is one of the safest and most easily understood ways to plot categorical data.
+
+## Bar plot of counts
+
+With our data set, one of the first questions we might want to know is the number of subjects with and without myopia. Make a bar chart to answer this question visaully.
+
+```{r bar-plot-counts}
+
+ggplot(data = myopia, 
+       mapping = aes(x = myopic)) + 
+  geom_bar(width = 0.5)
+
+```
+
+## Bar plot of proportions
+
+Sometimes instead of counts, you may want to show proportions of subects. With ggplot2, this does require some data manipulation. This can be a common task when visualizing your data; you may need to calculate or reshape data to make your plot rather than relying on the raw data.
+
+Below the data manipulation step has been done for you to create a new data set call `proportion_myopic`:
+
+```{r make-pct-data}
+proportion_myopic <- myopia %>% 
+  group_by(myopic) %>% 
+  summarise(count = n()) %>% 
+  mutate(percent = count / sum(count))
+
+# Take a look at the new data frame.
+proportion_myopic
+```
+
+Using the newly created data frame `proportion_myopic`, plot the proportion of patients that are myopic. Note -- we will use the same structure as we did with counts but we will need to add some extra elements:
+
++ We need to include `y = percent` in the aesthtic mapping and
++ we need to insert `stat = "identity"` into the parenthesis for the geom.
+
+This extra step tells ggplot2 to plot the numbers that we give it (literally) and not to summarize them for us. A shell script has been provided again.
+
+```{r bar-plot-proportion}
+
+ggplot(data = proportion_myopic, 
+       mapping = aes(x = myopic, 
+                     y = percent)) + 
+  geom_bar(stat = "identity", 
+           width = 0.5)
+
+```
+
+
+## Exercise 1
+
+Using the skills we practice above, pick another categorical variable from the data set and plot the **number** of subjects. Here are some available variables:
+
++ `gender` How may subects are male and how many are female?
++ `mommy` How many subjects' mothers had myopia?
++ `dadmy` How many subjects' fathers had myopia?
+
+Challenge: Plot the **proportion** of subjects.
+
+```{r exercise-1-template, eval=FALSE}
+
+# For bar chart of number or count
+ggplot(data = <data>,
+       mapping = aes(x = <x-variable>)) +
+  <geom>
+
+
+# For proportions you need a y aesthetic
+ggplot(data = <data>,
+       mapping = aes(x = <x-variable>,
+                     y = <y-variable>)) +
+  <geom>
+ 
+```
+
+
+```{r exercise-1}
+
+?ggplot2::ggsave
+
+```
+
+### Saving
+
+To save your plot, ggplot does make this easy for you to do with the command `ggplot2::ggsave`. When you give this command ggplot will default to the "last plot that you made". To learn more later explore the help with `?ggplot2::ggsave`.
+
+Make sure to give your plot a meaningful name and a file extension which will determined the type of file to save. Examples:
+
++ "myopic-barplot.png"
++ "myopia-counts.tiff"
++ "my-bars.png"
+
+
+```{r}
+ggplot2::ggsave(filename = "uni-exercise-1-plot.png")
+
+```
+
+
+# Continous variables
+
+Some common univariate plots for continuous variables that we will be exploring are listed below along with their corresponding geoms
+
++ Histograms (`geom_histogram`)
++ Density plots (`geom_density`)
++ Box plots (`geom_boxplot`)
+
+## Histograms
+
+A histogram is a very common way to show the distribution of a continuous variable. Values are grouped by ranges of values or "bins" and the height of each bar shows how many values fall into each range. 
+
+Warning: Information gleamed from histograms are subject to the number of bins chosen and can sometimes be misleading. Papers have been written on this topic, but good general advice to to explore a few options that are well reasoned.
+
+In working with the myopoia data, we might be interested to know what the age distribution of the children looks like. Let's make a histogram to see.
+
+```{r histogram-age}
+ggplot(data = myopia, 
+       mapping = aes(x = age)) + 
+  geom_histogram()
+
+
+```
+
+Hmm... We can see from the plot that age, even though numeric, only takes on whole, integer values. So despite being a continuous variable, a bar chart or other categorical type plot may be better to display age.
+
+
+```{r bar-age}
+ggplot(data = myopia, 
+       mapping = aes(x = age)) + 
+  geom_bar()
+
+```
+
+
+Let's explore another variable: Anterior chamber depth (`acd`). ACD is known to have a relationship with myopia, so it's a good candidate variable to explore. Make a histogram of the variable `acd`
+
+
+```{r histogram-acd}
+ggplot(data = myopia, 
+       mapping = aes(x = acd)) + 
+  geom_histogram()
+
+
+```
+
+There appears to be a bi-modal distribution to `acd` (notice the two peaks). 
+
+Notice that we get a warning that we should consider picking a better binwdth. Let's do that.
+
+
+```{r histogram-acd-different-bins}
+ggplot(data = myopia, 
+       mapping = aes(x = acd)) + 
+  geom_histogram(binwidth = 0.10)
+
+
+```
+
+No warning this time and we still see a similar shape. Play around with the bind width values and see for yourself how this can be misleading.
+
+Despite this shortcoming, histograms are still a very reliable and valuable figure to use when exploring continuous variables.
+
+
+## Density plots
+
+A density plot is another way to visualize continuous data to understand the distribution of the data, but the distribution is smoothed and shown as a continuous curves rather than the bars that we saw with the histogram.
+
+Let's use `acd` again to make a density plot.
+
+```{r density-acd}
+ggplot(data = myopia, 
+       mapping = aes(x = acd)) + 
+  geom_density()
+```
+
+We can see similar information to what we saw with the histogram but now shown as a smooth curve. Note that a density plot can also mislead if not careful by showing a smooth continuous distribution when the data may actually be more sparse. It helps to understand the underlying data to guage when one plot might provide better conclusions than the other.
+
+
+## Boxplots
+
+Box plot is a often seen way to summarize the distribution of a continuous variable using a five number summary: minimum, first quartile (25th percentile), median, third quartile (75th percentile), and maximum. The whiskers extend to the largest value no further then 1.5 * the interquartile range (IQR). Outliers are shown as points.
+
+Making a boxplot for a single variable in ggplot can be a little odd. The variable that we want to summarize is mapped to the y aesthetic and we have to give a "dummy" x aesthetic which can be a "", "x", or "1", any single value to act as a place holder.
+
+Let's make a boxplot for `acd`. Note the I've added an adjustment to the width of the box plot; I almost always do some adjustment to width whenever I make a box plot or a bar plot.
+
+```{r boxplot-acd}
+ggplot(data = myopia, 
+       mapping = aes(x = "", 
+                     y = acd)) + 
+  geom_boxplot(width = 0.5)
+
+```
+
+## Exercise 2
+
+Choose another continuous variable and make one of the plots we've just seen
+
++ Histogram (`geom_histogram`)
++ Density plot (`geom_density`)
++ Box plot (`geom_boxplot`)
+
+I suggest to pick one of the following variables:
+
++ `vcd`, Vitreous Chamber Depth
++ `lt`, Lens Thickness
++ `al`, Axial Length
++ `spheq`, Spherical Equivalent Refraction
+
+Remember that if you choose to make a histogram you may want to change the binwidth from the default.
+
+Challenge: We have not covered it, but try adding some color or fill to the plots
+
+```{r exercise-2-template, eval=FALSE}
+
+ggplot(data = <data>,
+       mapping = aes(x = <x-variable>)) +
+  <geom>
+
+```
+
+```{r exercise-2}
+
+
+
+```
+
+
+### Saving
+
+To save your plot, ggplot does make this easy for you to do with the command `ggplot2::ggsave`. When you give this command ggplot will default to the "last plot that you made". To learn more later explore the help with `?ggplot2::ggsave`.
+
+Make sure to give your plot a meaningful name and a file extension which will determined the type of file to save. Examples:
+
++ "myopic-barplot.png"
++ "myopia-counts.tiff"
++ "my-bars.png"
+
+
+```{r}
+ggplot2::ggsave(filename = "uni-exercise-2-plot.png")
+
+```

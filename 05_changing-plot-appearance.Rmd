@@ -1,0 +1,168 @@
+---
+title: "Changing how your plot looks"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(babynames)
+```
+
+Alright, pick any plot you liked from earlier in the session and copy it into the space below. We're going to work on changing the details and appearance of this one plot:
+
+```{r}
+# Replace this with a plot you like
+
+kevindata <- babynames %>% 
+  filter(                            # Filter only keeps rows matching a criteria
+    (name == "Kevin" & sex == "M"))  # We'll keep rows where the name is "Kevin" AND (&) sex is "M"
+
+ggplot(kevindata,
+       aes(x = year,
+           y = n)) +
+  geom_line()
+```
+
+Great, now every plot is a bad plot until it has useful labels. Look at your x- and y-axis labels, are those useful? Where is your title? Who made this chart? Bah, I can't believe you liked this plot, we have some work to do...
+
+To add labels we're just going to add another line to the plot code with the function `labs()`, here is an example:
+
+```{r}
+ggplot(kevindata,
+       aes(x = year,
+           y = n)) +
+  geom_line() +
+  labs(x = "Actually, 'year' was a pretty good label, and now this is worse")
+```
+
+Great, you can see the other arguments for `labs()` with `?labs`, but they include "y", "title", "subtitle", "caption" and "tag". Use another 3 labs and make this plot better
+
+```{r}
+# Come on, make that pretty plot with clear and concise labels and annotations
+
+
+```
+
+
+Sweet, now your chart is more informative, but what if you want to make it look snazzy? Well there are a hundred ways to change that (and if you really want to, you can make just about anything you want with ggplot) but a quick way to spice up that chart is with built-in themes.
+
+Try out one, options include: theme_bw, theme_light, theme_dark, theme_minimal, theme_classic, theme_void
+
+(pssst, if you PI insists on Prism charts, they might like theme_classic)
+
+```{r}
+ggplot(kevindata,
+       aes(x = year,
+           y = n)) +
+  geom_line() +
+  theme_minimal()
+
+```
+
+If you want to get more fancy (and we know you do, you're so extra) you can install ggthemes and use themes modeled after major publications or styles like:
+
+* theme_fivethirtyeight
+* theme_economist
+* theme_wsj
+* theme_excel
+* theme_excel_new
+* theme_tufte
+* theme_stata
+
+```{r}
+library(ggthemes)
+
+ggplot(kevindata,
+       aes(x = year,
+           y = n)) +
+  geom_line() +
+  theme_gdocs()
+```
+
+Save your plot:
+
+```{r}
+ggsave("MySuperCoolPlot_WithNewAppearance.jpg")
+```
+
+
+# Stretch goals
+
+Pick something that interests you, look around online or ask a TA for help:
+
+* Learn how to change one axis on your chart to log scale
+* Add horizontal or vertical lines at key timepoints or thresholds to annotate your results
+* Add a title and align it over the center of your plot
+* Change the color of your axis titles
+* Add or remove your gridlines
+* Change where your tickmarks or gridlines appear on the chart
+
+Or work through the example below to add labels to your first myopia barchart:
+
+In a previous example we made a barchart below
+
+```{r}
+
+ggplot(data = myopia,       # Define the data for the plot
+       aes(x = myopic)) +   # Define the aesthetic and the variable of inteterest (myopic)
+  geom_bar()                # Define the appropriate geom_
+```
+
+But what if we wanted to add on the number for each bar? We would need a table with the relevant data
+
+```{r}
+myopia_count_table <- myopia %>% 
+  count(myopic)
+
+myopia_count_table
+```
+
+We could then plot these two numbers just like any other data using geom_text
+
+```{r}
+ggplot(data = myopia_count_table,
+       aes(x = myopic,
+           y = n,         # We want the numbers to be at the top of the barcharts
+           label = n)) +  # We want the labeling text to be the same number from the table
+  geom_text()
+```
+
+Great, we can plot the numbers, but alone they aren't very helpful
+
+We can layer them onto the geom_bar plot, but they use a different dataset (the smaller summary table)
+
+You can change the dataset for each geom_ as follows:
+
+```{r}
+ggplot(data = myopia,
+       aes(x = myopic)) +
+  geom_bar() +
+  geom_text(data = myopia_count_table,
+            aes(x = myopic,
+                y = n,
+                label = n))
+```
+
+That works, but if the numbers were a little higher than the chart they would be easier to see
+
+We could just add 20 to the height for each label to bump it up
+
+```{r}
+ggplot(data = myopia,
+       aes(x = myopic)) +
+  geom_bar() +
+  geom_text(data = myopia_count_table,
+            aes(x = myopic,
+                y = n + 20, # Artificially adding to n to bump the labels higher
+                label = n))
+```
+
+
+
+
+
+
+
+
+
+

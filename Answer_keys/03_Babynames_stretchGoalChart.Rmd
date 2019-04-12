@@ -1,0 +1,62 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Create dataset with counts each year by last letter of each name
+
+```{r}
+library(tidyverse)
+library(babynames)
+
+baby2 <- babynames %>% 
+  mutate(first_letter = str_extract(name, "^.")) %>% 
+  mutate(last_letter = str_to_upper(str_extract(name, ".$"))) %>% 
+  mutate(name_length = str_count(name, "."))
+
+last_gendered <- baby2 %>% 
+  group_by(year, sex, last_letter) %>% 
+  summarise(total_n = sum(n),
+            total_prop = sum(prop)) %>% 
+  ungroup()
+
+last_comparison <- last_gendered %>% 
+  select(-total_n) %>% 
+  spread(key = sex, value = total_prop, fill = 0) %>% 
+  rename(female_prop = F) %>% 
+  rename(male_prop = M) %>% 
+  mutate(female_minus_male = female_prop-male_prop) %>% 
+  mutate(relative_change = (female_prop - male_prop) / (male_prop + female_prop)) %>%
+  mutate(is_vowel = case_when(
+    str_detect(last_letter, "A|E|I|O|U|Y") ~ TRUE,
+    TRUE ~ FALSE
+  ))
+```
+
+
+```{r}
+ggplot(last_comparison %>% filter(year >= 1940), aes(x = year, y = relative_change, color = relative_change < 0)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "24", color = "grey80") + 
+  facet_wrap(~last_letter, ncol = 13) + 
+  scale_x_continuous(breaks = c(1950, 2000)) +
+  scale_y_continuous(breaks = c(1, 0, -1), labels = c("Female", "Balanced", "Male")) +
+  theme(panel.background = element_rect(fill = "grey35"),
+        plot.background = element_rect(fill = "grey20"),
+        strip.background = element_rect(fill = "grey30"),
+        panel.grid = element_blank(),
+        legend.position = "none",
+        axis.text.x = element_text(angle = 90, vjust = 0.5),
+        plot.title = element_text(hjust = 0.5, face = "bold"),
+        plot.subtitle = element_text(hjust = 0.5),
+        text = element_text(color = "grey90"),
+        strip.text = element_text(color = "grey90"),
+        axis.text = element_text(color = "grey90")) +
+  labs(title = "Names that end in vowels are predominantly female (kinda)",
+       subtitle = "Relative proportion of females with names ending with each letter",
+       caption = paste("Kevin Watanabe-Smith using babynames data set (SSA)", 
+                       "Relative proportion = (female_prop - male_prop) / (female_prop + male_prop)",
+                       sep = "\n"),
+       y = paste("Relative Proportion", sep = "\n"),
+       x = "Year")
+```
